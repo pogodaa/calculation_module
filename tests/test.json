@@ -1,0 +1,39 @@
+{
+  "indicators": [
+    {
+      "id": "продажи_2024",
+      "value": 150000.50,
+      "weight": 1.0,
+      "unit": "руб."
+    },
+    {
+      "id": "прибыль_2024",
+      "value": 50000.00,
+      "weight": 1.2,
+      "unit": "руб."
+    },
+    {
+      "id": "клиенты_2024",
+      "value": 1200,
+      "weight": 0.8,
+      "unit": "чел."
+    },
+    {
+      "id": "затраты_2024",
+      "value": 80000.00,
+      "weight": 0.9,
+      "unit": "руб."
+    },
+    {
+      "id": "эффективность",
+      "value": 1.875,
+      "weight": 1.5,
+      "unit": "коэфф."
+    }
+  ],
+  "coefficients": {
+    "previous_period_value": 120000,
+    "output_value": 540000,
+    "input_value": 180000
+  }
+}

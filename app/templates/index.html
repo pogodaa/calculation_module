@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Модуль расчёта показателей{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Расчёт статистических показателей</h2>
+    <p class="subtitle">Введите данные или загрузите файл для анализа</p>
+</div>
+
+<div class="content-grid">
+    <!-- Левая панель: Ввод данных -->
+    <div class="card">
+        <h3>📋 Ввод данных</h3>
+        
+        <!-- Таблица показателей -->
+        <div class="data-table-container">
+            <table class="data-table" id="indicatorsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Значение</th>
+                        <th>Вес</th>
+                        <th>Ед. изм.</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="indicatorsBody">
+                    <!-- Данные будут добавлены через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Форма добавления -->
+        <div class="form-group">
+            <h4>Добавить показатель</h4>
+            <div class="form-row">
+                <input type="text" id="indicatorId" placeholder="Идентификатор" required>
+                <input type="number" id="indicatorValue" placeholder="Значение" step="0.01" required>
+                <input type="number" id="indicatorWeight" placeholder="Вес" value="1.0" step="0.1">
+                <input type="text" id="indicatorUnit" placeholder="Единица измерения">
+                <button type="button" class="btn btn-primary" onclick="addIndicator()">Добавить</button>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="button-group" style="margin-top: 15px;">
+            <button type="button" class="btn btn-secondary" onclick="loadExampleData()">Загрузить пример</button>
+            <button type="button" class="btn btn-outline" onclick="clearAllIndicators()">Очистить всё</button>
+            <label class="file-upload-btn">
+                <input type="file" id="fileInput" accept=".json,.csv" onchange="uploadFile()" hidden>
+                📁 Загрузить файл
+            </label>
+        </div>
+    </div>
+
+    <!-- Правая панель: Коэффициенты и расчёт -->
+    <div class="card">
+        <h3>⚙️ Коэффициенты</h3>
+        
+        <form id="calculationForm" method="POST" action="/calculate">
+            <!-- Скрытый инпут для данных -->
+            <input type="hidden" id="indicatorsJson" name="indicators_json" value="[]">
+            
+            <div class="form-group">
+                <label for="previousValue">Предыдущее значение (для темпа роста):</label>
+                <input type="number" id="previousValue" name="previous_value" step="0.01" placeholder="120000">
+            </div>
+
+            <div class="form-group">
+                <label for="outputValue">Выходное значение (эффективность):</label>
+                <input type="number" id="outputValue" name="output_value" step="0.01" placeholder="540000">
+            </div>
+
+            <div class="form-group">
+                <label for="inputValue">Входное значение (эффективность):</label>
+                <input type="number" id="inputValue" name="input_value" step="0.01" placeholder="180000">
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-success btn-large" onclick="prepareFormData()">
+                    🚀 Выполнить расчёт
+                </button>
+            </div>
+        </form>
+
+        <div class="info-box" style="margin-top: 25px;">
+            <h4>ℹ️ Информация</h4>
+            <p>Поддерживаемые показатели:</p>
+            <ul>
+                <li>Среднее арифметическое</li>
+                <li>Средневзвешенное значение</li>
+                <li>Стандартное отклонение</li>
+                <li>Дисперсия</li>
+                <li>Медиана</li>
+                <li>Темп роста (%)</li>
+                <li>Коэффициент эффективности</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Хранение показателей
+let indicators = [];
+
+// Добавление показателя
+function addIndicator() {
+    const id = document.getElementById('indicatorId').value.trim();
+    const value = parseFloat(document.getElementById('indicatorValue').value);
+    const weight = parseFloat(document.getElementById('indicatorWeight').value || '1.0');
+    const unit = document.getElementById('indicatorUnit').value.trim();
+    
+    if (!id || isNaN(value)) {
+        alert('Пожалуйста, заполните все обязательные поля');
+        return;
+    }
+    
+    indicators.push({
+        id: id,
+        value: value,
+        weight: weight,
+        unit: unit
+    });
+    
+    updateTable();
+    clearForm();
+}
+
+// Обновление таблицы
+function updateTable() {
+    const tbody = document.getElementById('indicatorsBody');
+    tbody.innerHTML = '';
+    
+    indicators.forEach((ind, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${ind.id}</td>
+            <td>${ind.value.toFixed(2)}</td>
+            <td>${ind.weight.toFixed(2)}</td>
+            <td>${ind.unit || '-'}</td>
+            <td>
+                <button type="button" class="btn-sm btn-danger" onclick="removeIndicator(${index})">Удалить</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    // Обновление скрытого поля
+    document.getElementById('indicatorsJson').value = JSON.stringify(indicators);
+}
+
+// Удаление показателя
+function removeIndicator(index) {
+    indicators.splice(index, 1);
+    updateTable();
+}
+
+// Очистка формы
+function clearForm() {
+    document.getElementById('indicatorId').value = '';
+    document.getElementById('indicatorValue').value = '';
+    document.getElementById('indicatorWeight').value = '1.0';
+    document.getElementById('indicatorUnit').value = '';
+}
+
+// Очистка всех показателей
+function clearAllIndicators() {
+    if (confirm('Очистить все показатели?')) {
+        indicators = [];
+        updateTable();
+    }
+}
+
+// Загрузка примерных данных
+function loadExampleData() {
+    indicators = [
+        {id: "Продажи_2024", value: 150000, weight: 1.0, unit: "руб."},
+        {id: "Прибыль_2024", value: 50000, weight: 1.2, unit: "руб."},
+        {id: "Клиенты_2024", value: 1200, weight: 0.8, unit: "чел."},
+        {id: "Затраты_2024", value: 80000, weight: 0.9, unit: "руб."},
+        {id: "Эффективность", value: 1.8, weight: 1.5, unit: "коэфф."}
+    ];
+    updateTable();
+}
+
+// Подготовка данных перед отправкой формы
+function prepareFormData() {
+    document.getElementById('indicatorsJson').value = JSON.stringify(indicators);
+}
+
+// Загрузка файла
+function uploadFile() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/upload-file', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            indicators = data.indicators;
+            updateTable();
+            alert(`Файл "${data.filename}" успешно загружен (${indicators.length} показателей)`);
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Ошибка загрузки файла: ' + error);
+    });
+}
+
+// Инициализация
+window.onload = function() {
+    updateTable();
+};
+</script>
+{% endblock %}

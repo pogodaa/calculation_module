@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Модуль расчёта показателей{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📊 Модуль расчёта показателей прикладной системы</h1>
+            <nav>
+                <a href="/" {% if request.url.path == '/' %}class="active"{% endif %}>Главная</a>
+                <a href="/about" {% if request.url.path == '/about' %}class="active"{% endif %}>О проекте</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Учебный проект ПМ.01 | Версия 1.0.0 | 2026</p>
+        </div>
+    </footer>
+</body>
+</html>
